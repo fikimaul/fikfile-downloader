@@ -3,6 +3,7 @@ var fs      = require('fs'),
    https    = require('https'),
    dotenv   = require('dotenv'),
    path     = require('path'),
+   ProgressBar = require('progress'),
    liburl   = require('url')
    client  = http
 
@@ -48,11 +49,34 @@ function doRequest(url) {
    return new Promise ((resolve, reject) => {
      let req = client.get(url)
      req.on('response', res => {
-       resolve(res);
+		 var len = parseInt(res.headers['content-length'], 10);
+		if(!len)
+			len = 10;
+	  
+	  let bar = new ProgressBar('  downloading [:bar] :rate/bps :percent :etas', {
+		complete: '\u2588',
+		incomplete: ' ',
+		width: 20,
+		total: len
+	  });
+	 
+	  res.on('data', function (chunk) {
+		bar.tick(chunk.length);
+	  });
+      
+	  res.on('end', function () {
+		  bar.terminate();
+		console.log('\n');
+	  });
+  
+	  resolve(res);
      });
-     req.on('error', err => {
+     
+	 req.on('error', err => {
        reject(err);
      });
+		
+	 req.end();
    }); 
 }
 
@@ -65,5 +89,24 @@ async function DownloadFile(){
    console.log("Done..");
    console.log("=====================");
 }
+var events = require('events');
+var fs = require('fs');
+var eventsEmitter = new events.EventEmitter();
+var fileName = "D:\\Project\\logstash-oss-6.7.2.zip";
+eventsEmitter.on('read', (fileName) => {
+  
+    fs.readFile(fileName, 'utf8', (error, data) => {
+      
+        if (error) {
+          
+            console.log(error);
+          
+        } console.log(data);
+      
+    });
+  
+});
+
 
 module.exports  = {DownloadFile}
+
